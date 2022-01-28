@@ -1,36 +1,19 @@
-#!/usr/bin/env python3
-
 import time
 import os
+from devctl import *
 
 """
   input abstraction for the akai mpd218 pad controller
 """
-class MPD218:
+class MPD218(MidiDev):
   def __init__(self,mdfl=None):
-    self.desc='akai mpd218 pad controller'
-    self.midifile=mdfl
-    self.midifh=None
+    super().__init__('akai mpd218 pad controller',mdfl)
     self.scanning=True
     if self.midifile:
       self.midifh=os.open(self.midifile,os.O_RDWR)
 
   def togglescan(self):
     self.scanning=not self.scanning
-    
-  def midion(self,ch,note,velo):
-    midimsg=[0x90+ch,note,velo]
-    midiseq=bytearray(midimsg)
-    print('%s'%midimsg)
-    if self.midifh:
-      os.write(self.midifh,midiseq)
-    
-  def midioff(self,ch,note,velo):
-    midimsg=[0x80+ch,note,velo]
-    midiseq=bytearray(midimsg)
-    print('%s'%midimsg)
-    if self.midifh:
-      os.write(self.midifh,midiseq)
 
   def readmidimsg(self):
     if self.midifh:
@@ -41,10 +24,6 @@ class MPD218:
       while self.scanning:
         mmsg=os.read(self.midifh,3)
         callback(list(mmsg))
-
-  def closeio(self):
-    if self.midifh:
-      os.close(self.midifh)
 
   def getpadid(self,note):
     if note==36:
@@ -59,9 +38,6 @@ class MPD218:
       return 'pad5'
     if note==45:
       return 'pad6'
-
-  def __str__(self):
-    return '[description] %s\n[devicefile] %s'%(self.desc,self.midifile)
 
 
 def midihandler(mmsg):
